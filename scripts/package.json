@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "import-supabase-backup": "node ./import-supabase-backup.mjs"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "2.110.8",
     "@types/node": "catalog:",
     "tsx": "catalog:"
   }
