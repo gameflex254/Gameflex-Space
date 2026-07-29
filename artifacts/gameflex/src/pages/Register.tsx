@@ -75,28 +75,28 @@ export default function Register() {
                 <FormField control={form.control} name="phone" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone Number *</FormLabel>
-                    <FormControl><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} placeholder="0712345678" className="pl-10" /></div></FormControl>
+                    <FormControl><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} name="phone" autoComplete="tel" placeholder="0712345678" className="pl-10" /></div></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="email" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email (Optional - for login)</FormLabel>
-                    <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} placeholder="you@example.com" className="pl-10" type="email" /></div></FormControl>
+                    <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} name="email" autoComplete="email" placeholder="you@example.com" className="pl-10" type="email" /></div></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="username" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Username *</FormLabel>
-                    <FormControl><div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} placeholder="ProGamer254" className="pl-10" /></div></FormControl>
+                    <FormControl><div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} name="username" autoComplete="username" placeholder="ProGamer254" className="pl-10" /></div></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="gameHandle" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Game Handle</FormLabel>
-                    <FormControl><div className="relative"><Gamepad2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} placeholder="YourTag#1234" className="pl-10" /></div></FormControl>
+                    <FormControl><div className="relative"><Gamepad2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input {...field} name="gameHandle" placeholder="YourTag#1234" className="pl-10" /></div></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -106,8 +106,8 @@ export default function Register() {
                     <FormControl>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input {...field} type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10" />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label="Toggle password visibility"><Eye className="h-4 w-4" /></button>
+                        <Input {...field} name="password" autoComplete="new-password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10" />
+                        <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><Eye className="h-4 w-4" /></button>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -116,7 +116,7 @@ export default function Register() {
                 <FormField control={form.control} name="confirmPassword" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Confirm Password *</FormLabel>
-                    <FormControl><Input {...field} type="password" placeholder="••••••••" /></FormControl>
+                    <FormControl><Input {...field} name="confirmPassword" autoComplete="new-password" type="password" placeholder="••••••••" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

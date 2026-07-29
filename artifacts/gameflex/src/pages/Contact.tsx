@@ -49,6 +49,7 @@ export default function Contact() {
     message: '',
   });
   const { toast } = useToast();
+  const hasRequiredFields = formData.name.trim() && formData.email.trim() && formData.subject && formData.message.trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +116,8 @@ export default function Contact() {
                     <Label htmlFor="name">Name</Label>
                     <Input
                       id="name"
+                      name="name"
+                      autoComplete="name"
                       placeholder="Your name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -125,7 +128,9 @@ export default function Contact() {
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
+                      name="email"
                       type="email"
+                      autoComplete="email"
                       placeholder="your@email.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -137,7 +142,7 @@ export default function Contact() {
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject</Label>
                   <Select value={formData.subject} onValueChange={(v) => setFormData({ ...formData, subject: v })}>
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Select a support topic">
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                     <SelectContent>
@@ -155,6 +160,7 @@ export default function Contact() {
                   <Label htmlFor="message">Message</Label>
                   <Textarea
                     id="message"
+                    name="message"
                     placeholder="How can we help you?"
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -163,7 +169,11 @@ export default function Contact() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <p className="text-sm text-muted-foreground">
+                  We usually reply within one business day, and urgent issues can also be sent through WhatsApp.
+                </p>
+
+                <Button type="submit" className="w-full" disabled={isSubmitting || !hasRequiredFields}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

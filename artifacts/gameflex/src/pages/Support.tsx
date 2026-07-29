@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageSquare, Plus, Clock, CheckCircle, AlertCircle, Loader2, Send } from 'lucide-react';
+import { Link } from '@/lib/router-compat';
 import { formatDistanceToNow } from 'date-fns';
 
 const priorityColors: Record<string, string> = {
@@ -142,9 +143,16 @@ const Support = () => {
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-2xl mx-auto">
+        <Card className="max-w-2xl mx-auto border-border/50 bg-card/80 backdrop-blur-sm">
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">Please log in to access support.</p>
+            <MessageSquare className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold mb-2">Sign in to contact support</h2>
+            <p className="text-muted-foreground mb-6">
+              Create an account or log in to open a support ticket and track your conversations.
+            </p>
+            <Button asChild>
+              <Link to="/login">Go to login</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -208,8 +216,11 @@ const Support = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-8 text-center">
+                  <div className="p-8 text-center space-y-3">
                     <p className="text-muted-foreground">No tickets yet</p>
+                    <p className="text-sm text-muted-foreground">
+                      Open a new ticket for account, payment, or tournament questions.
+                    </p>
                   </div>
                 )}
               </CardContent>

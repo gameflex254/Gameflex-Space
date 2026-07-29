@@ -156,6 +156,7 @@ const FAQs = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
+                aria-label="Search frequently asked questions"
                 placeholder="Search FAQs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -166,23 +167,25 @@ const FAQs = () => {
         </Card>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <Badge
-            variant={selectedCategory === null ? 'default' : 'outline'}
-            className="cursor-pointer"
+        <div className="flex flex-wrap gap-2 mb-6" role="list" aria-label="FAQ categories">
+          <button
+            type="button"
+            aria-pressed={selectedCategory === null}
             onClick={() => setSelectedCategory(null)}
+            className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${selectedCategory === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border/70 bg-background/70 text-foreground hover:border-primary/50'}`}
           >
             All
-          </Badge>
+          </button>
           {faqCategories.map((category) => (
-            <Badge
+            <button
               key={category.id}
-              variant={selectedCategory === category.id ? 'default' : 'outline'}
-              className="cursor-pointer"
+              type="button"
+              aria-pressed={selectedCategory === category.id}
               onClick={() => setSelectedCategory(category.id)}
+              className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${selectedCategory === category.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border/70 bg-background/70 text-foreground hover:border-primary/50'}`}
             >
               {category.title}
-            </Badge>
+            </button>
           ))}
         </div>
 

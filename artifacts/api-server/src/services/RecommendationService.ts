@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { supabase } from './lib/supabase';
+import { getSupabaseClient } from '../lib/supabase.ts';
 
 export interface RecommendationEvent {
   user_id?: string | null;
@@ -63,11 +63,16 @@ function clamp(value: number, min = 0, max = 1) {
 
 export class RecommendationService {
   async recommend(request: RecommendationRequest): Promise<RecommendationResponse> {
+    const client = getSupabaseClient();
+    if (!client) {
+      return { items: [] };
+    }
+
     const { userId, feedType, limit = 20 } = request;
     const weights = buildWeightConfig();
 
-    const candidates = await this.getCandidates(feedType, limit * 3);
-    const profileSignals = userId ? await this.getUserSignals(userId) : null;
+    const candidates = await this.getCandidates(client, feedType, limit * 3);
+    const profileSignals = userId ? await this.getUserSignals(client, userId) : null;
 
     const scored = candidates.map((candidate) => {
       const score = this.scoreCandidate(candidate, profileSignals, weights);
@@ -83,6 +88,11 @@ export class RecommendationService {
   }
 
   async recordEvent(event: RecommendationEvent): Promise<void> {
+    const client = getSupabaseClient();
+    if (!client) {
+      return;
+    }
+
     const payload = {
       user_id: event.user_id ?? null,
       entity_type: event.entity_type,
@@ -92,7 +102,7 @@ export class RecommendationService {
       created_at: event.created_at,
     };
 
-    const { error } = await supabase
+    const { error } = await client
       .from('recommendation_events')
       .insert(payload)
       .throwOnError(false);
@@ -102,24 +112,24 @@ export class RecommendationService {
     }
   }
 
-  async getCandidates(feedType: RecommendationRequest['feedType'], maxItems: number): Promise<RecommendationCandidate[]> {
+  async getCandidates(client: any, feedType: RecommendationRequest['feedType'], maxItems: number): Promise<RecommendationCandidate[]> {
     switch (feedType) {
       case 'home':
       case 'explore':
-        return this.getStatusCandidates(maxItems);
+        return this.getStatusCandidates(client, maxItems);
       case 'stories':
-        return this.getStoryCandidates(maxItems);
+        return this.getStoryCandidates(client, maxItems);
       case 'reels':
-        return this.getReelCandidates(maxItems);
+        return this.getReelCandidates(client, maxItems);
       case 'friends':
-        return this.getSuggestedFriendCandidates(maxItems);
+        return this.getSuggestedFriendCandidates(client, maxItems);
       default:
         return [];
     }
   }
 
-  async getStatusCandidates(limit: number): Promise<RecommendationCandidate[]> {
-    const { data } = await supabase
+  async getStatusCandidates(client: any, limit: number): Promise<RecommendationCandidate[]> {
+    const { data } = await client
       .from('user_statuses')
       .select('*')
       .order('created_at', { ascending: false })
@@ -132,9 +142,9 @@ export class RecommendationService {
     }));
   }
 
-  async getStoryCandidates(limit: number): Promise<RecommendationCandidate[]> {
+  async getStoryCandidates(client: any, limit: number): Promise<RecommendationCandidate[]> {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data } = await supabase
+    const { data } = await client
       .from('user_statuses')
       .select('*')
       .gte('created_at', cutoff)
@@ -148,8 +158,8 @@ export class RecommendationService {
     }));
   }
 
-  async getReelCandidates(limit: number): Promise<RecommendationCandidate[]> {
-    const { data } = await supabase
+  async getReelCandidates(client: any, limit: number): Promise<RecommendationCandidate[]> {
+    const { data } = await client
       .from('user_statuses')
       .select('*')
       .eq('media_type', 'video')
@@ -163,8 +173,8 @@ export class RecommendationService {
     }));
   }
 
-  async getSuggestedFriendCandidates(limit: number): Promise<RecommendationCandidate[]> {
-    const { data } = await supabase
+  async getSuggestedFriendCandidates(client: any, limit: number): Promise<RecommendationCandidate[]> {
+    const { data } = await client
       .from('profiles')
       .select('user_id, username, avatar_url, total_wins, total_matches')
       .order('total_wins', { ascending: false })
@@ -177,16 +187,16 @@ export class RecommendationService {
     }));
   }
 
-  async getUserSignals(userId: string) {
+  async getUserSignals(client: any, userId: string) {
     const [eventsRes, followsRes] = await Promise.all([
-      supabase
+      client
         .from('recommendation_events')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(200)
         .throwOnError(false),
-      supabase
+      client
         .from('user_follows')
         .select('following_id')
         .eq('follower_id', userId)

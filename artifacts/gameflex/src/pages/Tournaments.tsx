@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Search, Gamepad2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TournamentCard } from '@/components/tournament-card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -54,6 +55,13 @@ export default function Tournaments() {
     return matchesSearch && matchesGame && matchesStatus;
   });
 
+  const hasActiveFilters = search.trim() !== '' || gameFilter !== 'all' || statusFilter !== 'all';
+  const resetFilters = () => {
+    setSearch('');
+    setGameFilter('all');
+    setStatusFilter('all');
+  };
+
   const liveTournaments = filteredTournaments.filter((t: any) => t.status === 'live');
   const otherTournaments = filteredTournaments.filter((t: any) => t.status !== 'live');
 
@@ -65,24 +73,34 @@ export default function Tournaments() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
         <div className="relative flex-1">
+          <label htmlFor="tournament-search" className="sr-only">Search tournaments</label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search tournaments..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <Input id="tournament-search" aria-label="Search tournaments" placeholder="Search tournaments..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <Select value={gameFilter} onValueChange={setGameFilter}>
-          <SelectTrigger className="w-full md:w-40"><SelectValue placeholder="Game" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-40" aria-label="Filter by game"><SelectValue placeholder="Game" /></SelectTrigger>
           <SelectContent>
             {games.map(g => <SelectItem key={g} value={g} className="capitalize">{g === 'all' ? 'All Games' : g.toUpperCase()}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-40" aria-label="Filter by status"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             {statuses.map(s => <SelectItem key={s} value={s} className="capitalize">{s === 'all' ? 'All Status' : s.replace('_', ' ')}</SelectItem>)}
           </SelectContent>
         </Select>
+        {hasActiveFilters && (
+          <Button type="button" variant="outline" onClick={resetFilters} className="md:w-auto">
+            Clear filters
+          </Button>
+        )}
       </div>
+
+      <p className="text-sm text-muted-foreground mb-8">
+        Showing {filteredTournaments.length} tournament{filteredTournaments.length === 1 ? '' : 's'}
+      </p>
 
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -110,10 +128,17 @@ export default function Tournaments() {
           </div>
 
           {filteredTournaments.length === 0 && (
-            <div className="text-center py-16">
+            <div className="text-center py-16 rounded-2xl border border-dashed border-border/70 bg-card/60">
               <Gamepad2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="font-display text-xl font-bold mb-2">No tournaments found</h3>
-              <p className="text-muted-foreground">Try adjusting your filters or check back later</p>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                Try adjusting your filters, or check back soon for fresh tournaments and live brackets.
+              </p>
+              {hasActiveFilters && (
+                <Button type="button" variant="outline" onClick={resetFilters}>
+                  Reset filters
+                </Button>
+              )}
             </div>
           )}
         </>
