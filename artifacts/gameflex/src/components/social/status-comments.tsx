@@ -28,6 +28,47 @@ interface Comment {
   profile?: CommentProfile;
 }
 
+function serializeReplyContent(content: string, replyTo?: string | null) {
+  const trimmed = (replyTo ?? '').trim();
+  if (!trimmed) return content;
+  return `↩${trimmed}::${content}`;
+}
+
+function parseReplyContent(content: string) {
+  if (!content.startsWith('↩')) return { replyTo: null, body: content };
+  const separator = content.indexOf('::');
+  if (separator === -1) return { replyTo: null, body: content.slice(1) };
+  return {
+    replyTo: content.slice(1, separator).trim() || null,
+    body: content.slice(separator + 2),
+  };
+}
+
+async function decodeCommentContent(content: string, isEncrypted: boolean) {
+  if (content.startsWith('↩')) {
+    const { replyTo, body } = parseReplyContent(content);
+    let decodedBody = body;
+    if (isEncrypted && body) {
+      try {
+        decodedBody = await decryptMessage(body);
+      } catch {
+        decodedBody = body;
+      }
+    }
+    return replyTo ? `↩${replyTo}::${decodedBody}` : decodedBody;
+  }
+
+  if (isEncrypted) {
+    try {
+      return await decryptMessage(content);
+    } catch {
+      return content;
+    }
+  }
+
+  return content;
+}
+
 interface StatusCommentsPropsExtended extends StatusCommentsProps {
   open?: boolean;
 }
@@ -38,10 +79,16 @@ export function StatusComments({ statusId, commentsCount, open = false }: Status
   const { toast } = useToast();
   const [newComment, setNewComment] = useState('');
   const [isExpanded, setIsExpanded] = useState(open);
+  const [replyTarget, setReplyTarget] = useState<Comment | null>(null);
 
   useEffect(() => {
     if (open) setIsExpanded(true);
   }, [open]);
+
+  useEffect(() => {
+    if (!isExpanded) setReplyTarget(null);
+  }, [isExpanded]);
+
   const [decryptedComments, setDecryptedComments] = useState<Map<string, string>>(new Map());
 
   const { data: comments = [], isLoading } = useQuery({
@@ -77,15 +124,7 @@ export function StatusComments({ statusId, commentsCount, open = false }: Status
     async function decryptComments() {
       const decrypted = new Map<string, string>();
       for (const comment of comments) {
-        if (comment.is_encrypted) {
-          try {
-            decrypted.set(comment.id, await decryptMessage(comment.content));
-          } catch {
-            decrypted.set(comment.id, comment.content);
-          }
-        } else {
-          decrypted.set(comment.id, comment.content);
-        }
+        decrypted.set(comment.id, await decodeCommentContent(comment.content, comment.is_encrypted));
       }
       setDecryptedComments(decrypted);
     }
@@ -118,20 +157,22 @@ export function StatusComments({ statusId, commentsCount, open = false }: Status
   }, [statusId, isExpanded, queryClient]);
 
   const addCommentMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, replyTarget }: { content: string; replyTarget: Comment | null }) => {
       if (!user) throw new Error('Not authenticated');
 
       const encryptedContent = await encryptMessage(content);
+      const payloadContent = serializeReplyContent(encryptedContent, replyTarget?.profile?.username);
       const { error } = await supabase.from('status_comments').insert({
         status_id: statusId,
         user_id: user.id,
-        content: encryptedContent,
+        content: payloadContent,
         is_encrypted: true
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setNewComment('');
+      setReplyTarget(null);
       queryClient.invalidateQueries({ queryKey: ['user-statuses'] });
       queryClient.invalidateQueries({ queryKey: ['status-comments', statusId] });
       void recommendationEventService.recordEvent({
@@ -148,9 +189,9 @@ export function StatusComments({ statusId, commentsCount, open = false }: Status
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newComment.trim()) {
-      addCommentMutation.mutate(newComment.trim());
-    }
+    const content = newComment.trim();
+    if (!content) return;
+    addCommentMutation.mutate({ content, replyTarget });
   };
 
   return (
@@ -165,22 +206,53 @@ export function StatusComments({ statusId, commentsCount, open = false }: Status
       )}
 
       {isExpanded && (
-        <div className="mt-1 space-y-1">
+        <div className="mt-1 space-y-2">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(false)}
+            className="text-[13px] text-muted-foreground hover:text-foreground transition-colors outline-none"
+          >
+            Hide comments
+          </button>
           {isLoading ? (
             <div className="py-2 text-[14px] text-muted-foreground">Loading comments...</div>
           ) : (
-            <div className="space-y-1">
-              {comments.map((comment) => (
-                <div key={comment.id} className="text-[14px] leading-[18px] group flex items-start justify-between">
-                  <div>
-                    <span className="font-bold mr-2 tracking-tight">{comment.profile?.username ?? 'Unknown'}</span>
-                    <span>{decryptedComments.get(comment.id) ?? '...'}</span>
+            <div className="space-y-3">
+              {comments.map((comment) => {
+                const parsed = parseReplyContent(decryptedComments.get(comment.id) ?? comment.content);
+                return (
+                  <div key={comment.id} className="text-[14px] leading-[18px] group flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-bold tracking-tight">{comment.profile?.username ?? 'Unknown'}</span>
+                        {parsed.replyTo && (
+                          <span className="text-[11px] text-muted-foreground">replying to {parsed.replyTo}</span>
+                        )}
+                      </div>
+                      <div className="text-[14px] break-words">{parsed.body}</div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      {comment.is_encrypted && <Lock className="h-3 w-3 text-muted-foreground opacity-50" />}
+                      <button
+                        type="button"
+                        onClick={() => setReplyTarget(comment)}
+                        className="text-[11px] uppercase tracking-wide text-primary/80 hover:text-primary"
+                      >
+                        Reply
+                      </button>
+                    </div>
                   </div>
-                  {comment.is_encrypted && <Lock className="h-3 w-3 text-muted-foreground opacity-50 shrink-0 mt-0.5 ml-2" />}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+        </div>
+      )}
+
+      {replyTarget && (
+        <div className="mt-2 rounded-xl border border-border/50 bg-secondary/50 px-3 py-2 text-xs text-muted-foreground flex items-center justify-between gap-3">
+          <span>Replying to {replyTarget.profile?.username ?? 'this comment'}</span>
+          <button type="button" onClick={() => setReplyTarget(null)} className="text-primary hover:text-primary/80">Cancel</button>
         </div>
       )}
 

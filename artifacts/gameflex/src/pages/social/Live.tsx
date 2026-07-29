@@ -114,18 +114,18 @@ export default function Live() {
                 </span>
               </div>
               
-              {featuredLive.group_link && extractYouTubeId(featuredLive.group_link) ? (
+              {((featuredLive.live_stream_link ?? featuredLive.group_link) && extractYouTubeId(featuredLive.live_stream_link ?? featuredLive.group_link)) ? (
                 <div className="aspect-video bg-black">
                   <iframe
-                    src={`https://www.youtube.com/embed/${extractYouTubeId(featuredLive.group_link)}?autoplay=1&mute=1`}
+                    src={`https://www.youtube.com/embed/${extractYouTubeId(featuredLive.live_stream_link ?? featuredLive.group_link)}?autoplay=1&mute=1`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     className="w-full h-full"
                   />
                 </div>
-              ) : featuredLive.group_link ? (
+              ) : (featuredLive.live_stream_link ?? featuredLive.group_link) ? (
                 <div className="aspect-video bg-black">
-                  <video src={featuredLive.group_link} controls className="w-full h-full" />
+                  <video src={featuredLive.live_stream_link ?? featuredLive.group_link} controls className="w-full h-full" />
                 </div>
               ) : (
                 <div className="aspect-video bg-gradient-to-br from-secondary via-secondary/50 to-secondary flex items-center justify-center">
@@ -175,10 +175,10 @@ export default function Live() {
                     to={`/tournaments/${t.id}`} 
                   className="group rounded-xl bg-card border border-border/50 hover:border-border p-4 transition-all hover:shadow-md hover:-translate-y-0.5"
                   >
-                    {t.group_link && extractYouTubeId(t.group_link) ? (
+                    {(t.live_stream_link ?? t.group_link) && extractYouTubeId(t.live_stream_link ?? t.group_link) ? (
                       <div className="aspect-video rounded-lg overflow-hidden mb-3 bg-black relative">
                         <img 
-                          src={`https://img.youtube.com/vi/${extractYouTubeId(t.group_link)}/hqdefault.jpg`}
+                          src={`https://img.youtube.com/vi/${extractYouTubeId(t.live_stream_link ?? t.group_link)}/hqdefault.jpg`}
                           alt={t.title}
                           className="w-full h-full object-cover"
                           loading="lazy"

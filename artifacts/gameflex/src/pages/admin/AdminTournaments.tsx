@@ -52,6 +52,7 @@ export default function AdminTournaments() {
     start_date: '',
     registration_deadline: '',
     rules: '',
+    live_stream_link: '',
     group_link: ''
   });
 
@@ -100,6 +101,7 @@ export default function AdminTournaments() {
         start_date: new Date(data.start_date).toISOString(),
         registration_deadline: new Date(data.registration_deadline).toISOString(),
         rules: data.rules,
+        live_stream_link: data.live_stream_link || null,
         group_link: data.group_link || null,
         image_url: imageUrl,
         created_by: user?.id
@@ -111,7 +113,7 @@ export default function AdminTournaments() {
       toast({ title: 'Tournament Created', description: 'New tournament has been created' });
       setIsOpen(false);
       setImageFile(null);
-      setFormData({ title: '', description: '', game: 'fifa', format: 'single_elimination', entry_fee: 0, prize_pool: 0, max_participants: 16, start_date: '', registration_deadline: '', rules: '', group_link: '' });
+      setFormData({ title: '', description: '', game: 'fifa', format: 'single_elimination', entry_fee: 0, prize_pool: 0, max_participants: 16, start_date: '', registration_deadline: '', rules: '', live_stream_link: '', group_link: '' });
     },
     onError: (error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -150,6 +152,7 @@ export default function AdminTournaments() {
       start_date: toLocalInput(t.start_date),
       registration_deadline: toLocalInput(t.registration_deadline),
       rules: t.rules ?? '',
+      live_stream_link: t.live_stream_link ?? '',
       group_link: t.group_link ?? '',
       image_url: t.image_url ?? null,
     });
@@ -175,6 +178,7 @@ export default function AdminTournaments() {
           start_date: new Date(data.start_date).toISOString(),
           registration_deadline: new Date(data.registration_deadline).toISOString(),
           rules: data.rules,
+          live_stream_link: data.live_stream_link || null,
           group_link: data.group_link || null,
           image_url: imageUrl,
         })
@@ -284,19 +288,35 @@ export default function AdminTournaments() {
                 
                 {/* Stream URL / Group Link */}
                 <div className="col-span-2">
-                  <Label htmlFor="group_link">Stream URL / Group Link</Label>
+                  <Label htmlFor="live_stream_link">Live Stream URL</Label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="live_stream_link" 
+                      value={formData.live_stream_link} 
+                      onChange={(e) => setFormData({ ...formData, live_stream_link: e.target.value })} 
+                      placeholder="YouTube URL or stream link..."
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    YouTube URLs will auto-embed on the Live page.
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="group_link">Join Group Link</Label>
                   <div className="relative">
                     <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
                       id="group_link" 
                       value={formData.group_link} 
                       onChange={(e) => setFormData({ ...formData, group_link: e.target.value })} 
-                      placeholder="YouTube URL, video link, or WhatsApp group..."
+                      placeholder="WhatsApp group or chat invite..."
                       className="pl-10"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    YouTube URLs will auto-embed on the Live page. Other links shared with registered players.
+                    Registered players can use this link to join the tournament group.
                   </p>
                 </div>
 
@@ -347,13 +367,22 @@ export default function AdminTournaments() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              {t.group_link ? (
-                <a href={t.group_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
+            <div className="space-y-1 text-xs">
+              {t.live_stream_link ? (
+                <a href={t.live_stream_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
                   <LinkIcon className="h-4 w-4" />
-                  {t.group_link.includes('youtube') || t.group_link.includes('youtu.be') ? 'Stream' : 'Link'}
+                  Stream
                 </a>
-              ) : <span className="text-muted-foreground text-xs">—</span>}
+              ) : null}
+              {t.group_link ? (
+                <a href={t.group_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                  <LinkIcon className="h-4 w-4" />
+                  Group
+                </a>
+              ) : null}
+              {!t.live_stream_link && !t.group_link ? (
+                <span className="text-muted-foreground">—</span>
+              ) : null}
             </div>
             <div className="flex gap-2">
               <Button
@@ -457,19 +486,35 @@ export default function AdminTournaments() {
                   <Input id="edit_deadline" type="datetime-local" value={editing.registration_deadline} onChange={(e) => setEditing({ ...editing, registration_deadline: e.target.value })} required />
                 </div>
                 <div className="col-span-2">
-                  <Label htmlFor="edit_group_link">Stream URL / Group Link</Label>
+                  <Label htmlFor="edit_live_stream_link">Live Stream URL</Label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="edit_live_stream_link"
+                      value={editing.live_stream_link}
+                      onChange={(e) => setEditing({ ...editing, live_stream_link: e.target.value })}
+                      placeholder="YouTube URL or stream link..."
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    YouTube URLs will auto-embed on the Live page.
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="edit_group_link">Join Group Link</Label>
                   <div className="relative">
                     <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="edit_group_link"
                       value={editing.group_link}
                       onChange={(e) => setEditing({ ...editing, group_link: e.target.value })}
-                      placeholder="YouTube URL, video link, or WhatsApp group..."
+                      placeholder="WhatsApp group or chat invite..."
                       className="pl-10"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    YouTube URLs will auto-embed on the Live page
+                    Registered players can use this link to join the tournament group.
                   </p>
                 </div>
                 <div className="col-span-2">

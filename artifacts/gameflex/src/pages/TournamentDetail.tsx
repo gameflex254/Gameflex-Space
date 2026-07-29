@@ -259,6 +259,15 @@ export default function TournamentDetail() {
                 )}
               </div>
             )}
+            {tournament.live_stream_link && (
+              <div className="mt-3">
+                <a href={tournament.live_stream_link} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="outline" className="mt-2">
+                    <ExternalLink className="w-4 h-4 mr-2" />Watch Live Stream
+                  </Button>
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -35,6 +35,31 @@ function parseReplyContent(content: string) {
   };
 }
 
+async function decodeCommentContent(content: string, isEncrypted: boolean) {
+  if (content.startsWith('↩')) {
+    const { replyTo, body } = parseReplyContent(content);
+    let decodedBody = body;
+    if (isEncrypted && body) {
+      try {
+        decodedBody = await decryptMessage(body);
+      } catch {
+        decodedBody = body;
+      }
+    }
+    return replyTo ? `↩${replyTo}::${decodedBody}` : decodedBody;
+  }
+
+  if (isEncrypted) {
+    try {
+      return await decryptMessage(content);
+    } catch {
+      return content;
+    }
+  }
+
+  return content;
+}
+
 // ─── StoryViewer ─────────────────────────────────────────────────────────────
 
 export function StoryViewer({
@@ -84,11 +109,8 @@ export function StoryViewer({
         .from('profiles').select('user_id, username, avatar_url').in('user_id', ids);
       const pm = new Map(profiles?.map((p: any) => [p.user_id, p]) ?? []);
       return Promise.all(data.map(async (c: any) => {
-        let text = c.content;
-        if (c.is_encrypted) {
-          try { text = await decryptMessage(c.content); } catch {}
-        }
-        return { ...c, profile: pm.get(c.user_id), displayText: text };
+        const decoded = await decodeCommentContent(c.content, c.is_encrypted);
+        return { ...c, profile: pm.get(c.user_id), displayText: decoded };
       }));
     },
   });
